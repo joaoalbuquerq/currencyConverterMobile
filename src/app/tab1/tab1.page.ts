@@ -90,11 +90,20 @@ export class Tab1Page {
     this.carregando = true;
 
     try {
+
+      const respostaApi: any = await this.http.get(
+        `${this.baseUrl}/${this.apiKey}/latest/${this.moedaOrigem}`
+      ).toPromise();
+
+      this.taxasCambio = respostaApi.conversion_rates;
+      this.ultimaAtualizacao = new Date().toLocaleString('pt-BR');
       
     } catch (error) {
       console.log("Erro ao carregar as taxas de cambio: ", error);
-      await this.showAlert('Erro', 'Não foi possivel atualizar');
+      await this.showAlert('Erro', 'Não foi possivel atualizar as taxas de cambio');
     }
+
+    this.carregando = false;
   }
 
     private async showAlert(header: string, message: string) {
@@ -104,6 +113,10 @@ export class Tab1Page {
       buttons: ['OK']
     });
     await alert.present();
+  }
+
+  get obterTaxaCambioAtual():number{
+    return this.taxasCambio[this.moedaDestino]?.valueOf() || 0;
   }
 
 }
