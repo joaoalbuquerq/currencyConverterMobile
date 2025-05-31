@@ -7,7 +7,7 @@ import { ExploreContainerComponentModule } from '../explore-container/explore-co
 
 import { Tab1PageRoutingModule } from './tab1-routing.module';
 
-import { HttpClientModule } from '@angular/common/module.d-CnjH8Dlt';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   imports: [
