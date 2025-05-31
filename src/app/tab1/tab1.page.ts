@@ -294,4 +294,19 @@ export class Tab1Page {
     }
   }
 
+    async repetirConversao(item: HistoricoConversoes) {
+    this.valor = item.valorOriginal;
+    this.moedaOrigem = item.moedaOrigem;
+    this.moedaDestino = item.moedaDestino;
+    this.exibirHistorico = false;
+    
+    // Recarrega as taxas se necessário
+    if (this.moedaDestino !== this.moedaDestino) {
+      await this.carregarHistorico();
+    }
+    
+    // Calcula novamente com as taxas atuais
+    this.calcularConversao();
+  }
+
 }
