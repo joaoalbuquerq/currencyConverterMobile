@@ -5,7 +5,7 @@ import { AlertController, LoadingController } from '@ionic/angular';
 // INTERFACE PARA MODELAR A RESPOSTA E CONVERTER PARA UM TIPO PERSONALIZADO MOEDA
 interface Moeda{
   codigo: string;
-  name: string;
+  nome: string;
 }
 
 // INTERFACE PARA MODELAR A RESPOSTA DA API E CONVERTER PARA UM TIPO PERSONALIZADO TAXACAMBIO
@@ -41,6 +41,10 @@ export class Tab1Page {
   ultimaAtualizacao: string = "";
 
 
+  // Dados da API
+  private apiKey = "47baa309f75101cea3287a40";
+  private baseUrl = "https://v6.exchangerate-api.com/v6/"
+
   constructor(
     private http: HttpClient,
     private loadingCtrl: LoadingController,
@@ -48,7 +52,38 @@ export class Tab1Page {
   ) {}
 
   ngOnInit(){
+    this.carregarMoedas();
+  }
+
+  atualizarTaxas(){
     this.carregarTaxasCambio();
+  }
+
+  async carregarMoedas(){
+    const caregandoMoedas = await this.loadingCtrl.create({
+      message: 'Carregando moedas...'
+    });
+    await caregandoMoedas.present();
+
+    try {
+      const respostaApi: any = await this.http.get(
+        `${this.baseUrl}/${this.apiKey}/codes`
+      ).toPromise();
+
+      this.moedas = respostaApi.supported_codes.map((item: any[]) => ({
+        codigo: item[0],
+        nome: item[1]
+      }));
+
+      this.moedasFiltradas = [...this.moedas];
+      this.moedasParaFiltro = [...this.moedas];
+
+      await this.carregarTaxasCambio();
+
+    } catch (error) {
+      console.log('Erro ao carregar moedas: ', error);
+      await this.showAlert('Erro','Não foi possível carregar as moedas')
+    }
   }
 
   async carregarTaxasCambio(){
