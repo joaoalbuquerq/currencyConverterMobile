@@ -53,8 +53,6 @@ export class Tab1Page {
   ultimaAtualizacao: string = "";
 
   historico: HistoricoConversoes[] = [];
-  exibirHistorico: boolean = false;
-
 
   // Dados da API
   private apiKey = "47baa309f75101cea3287a40";
@@ -76,6 +74,29 @@ export class Tab1Page {
 
   ngOnInit(){
     this.carregarMoedas();
+  }
+
+  // Adicionar este método
+  async verificarConversaoPreparada() {
+    try {
+      const conversaoPreparada = await this.storage.get('conversao_repetir');
+      if (conversaoPreparada) {
+        this.valor = conversaoPreparada.valor;
+        this.moedaOrigem = conversaoPreparada.moedaOrigem;
+        this.moedaDestino = conversaoPreparada.moedaDestino;
+        
+        // Remove os dados após usar
+        await this.storage.remove('conversao_repetir');
+        
+        // Carrega as taxas e calcula automaticamente
+        await this.carregarTaxasCambio();
+        if (this.valor > 0) {
+          await this.calcularConversao();
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao verificar conversão preparada:', error);
+    }
   }
 
   atualizarTaxas(){
@@ -190,7 +211,12 @@ export class Tab1Page {
     console.log(taxa)
     this.resultado = this.valor * taxa;
 
-    await this.salvarHistoricoConversoes(this.valor, this.moedaOrigem, this.moedaDestino, this.resultado, taxa)
+    await this.salvarHistoricoConversoes(
+      this.valor,
+      this.moedaOrigem,
+      this.moedaDestino,
+      this.resultado,
+      taxa);
   }
 
    async trocarConversao() {
@@ -220,18 +246,22 @@ export class Tab1Page {
     return this.taxasCambio[this.moedaDestino]?.valueOf() || 0;
   }
 
-  async carregarHistorico(){
-    try {
-      const historicoExistente = await this.storage.get('historico_conversao');
-      this.historico = historicoExistente ? historicoExistente.map((item: any) => ({
-        ...item,
-        atulizacao: new Date(item.ultimaAlteracao)
-      })): []
-    } catch (error) {
-      console.error('Erro ao carregar histórico',error);
-      this.historico = [];
-    }
+async carregarHistorico(){
+  try {
+    const historicoExistente = await this.storage.get('historico_conversao');
+    this.historico = historicoExistente ? historicoExistente.map((item: any) => ({
+      ...item,
+      ultimaAlteracao: new Date(item.ultimaAlteracao) // CORRIGIDO: era 'atulizacao'
+    })): []
+  } catch (error) {
+    console.error('Erro ao carregar histórico',error);
+    this.historico = [];
   }
+}
+
+ionViewWillEnter() {
+  this.verificarConversaoPreparada();
+}
 
   async salvarHistoricoConversoes(valorOriginal:number, moedaOrigem: string, moedaDestino: string, valorConvertido:number, taxa: number){
     const conversao: HistoricoConversoes = {
@@ -257,9 +287,6 @@ export class Tab1Page {
     }
   }
 
-  mostrarHistorico(){
-    this.exibirHistorico = !this.exibirHistorico;
-  }
 
   async limparHistorico(){
     const alerta = await this.alertCtrl.create({
@@ -276,7 +303,6 @@ export class Tab1Page {
           handler: async() => {
             this.historico = [];
             await this.storage.remove('historico_conversao');
-            this.exibirHistorico = false;
           }
         }
       ]
@@ -294,19 +320,16 @@ export class Tab1Page {
     }
   }
 
-    async repetirConversao(item: HistoricoConversoes) {
-    this.valor = item.valorOriginal;
-    this.moedaOrigem = item.moedaOrigem;
-    this.moedaDestino = item.moedaDestino;
-    this.exibirHistorico = false;
+  async repetirConversao(item: HistoricoConversoes) {
+    // Salva os dados no storage
+    await this.storage.set('conversao_repetir', {
+      valor: item.valorOriginal,
+      moedaOrigem: item.moedaOrigem,
+      moedaDestino: item.moedaDestino
+    });
     
-    // Recarrega as taxas se necessário
-    if (this.moedaDestino !== this.moedaDestino) {
-      await this.carregarHistorico();
-    }
-    
-    // Calcula novamente com as taxas atuais
-    this.calcularConversao();
+    // Recarrega os dados
+    await this.verificarConversaoPreparada();
   }
 
 }

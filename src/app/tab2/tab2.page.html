@@ -1,17 +1,204 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Tab 2
-    </ion-title>
+    <ion-title>Histórico de Conversões</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="carregarHistorico()" [disabled]="carregando">
+        <ion-icon name="refresh" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Tab 2</ion-title>
+      <ion-title size="large">Histórico</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <app-explore-container name="Tab 2 page"></app-explore-container>
+  <!-- Loading -->
+  <div *ngIf="carregando" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Carregando histórico...</p>
+  </div>
+
+  <div *ngIf="!carregando">
+    <!-- Estatísticas -->
+    <ion-card *ngIf="totalConversoes > 0">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="analytics" slot="start"></ion-icon>
+          Estatísticas
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <ion-label>
+              <h3>{{ totalConversoes }}</h3>
+              <p>Total de Conversões</p>
+            </ion-label>
+          </div>
+          <div class="stat-item">
+            <ion-label>
+              <h3>{{ valorTotalConvertido | number:'1.2-2' }}</h3>
+              <p>Valor Total Convertido</p>
+            </ion-label>
+          </div>
+          <div class="stat-item">
+            <ion-label>
+              <h3>{{ moedaMaisUsada }}</h3>
+              <p>Moeda Mais Usada</p>
+            </ion-label>
+          </div>
+          <div class="stat-item" *ngIf="conversaoMaiorValor">
+            <ion-label>
+              <h3>{{ conversaoMaiorValor.valorOriginal | number:'1.2-2' }}</h3>
+              <p>Maior Conversão</p>
+            </ion-label>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Filtros e Pesquisa -->
+    <ion-card *ngIf="totalConversoes > 0">
+      <ion-card-content>
+        <!-- Pesquisa -->
+        <ion-searchbar 
+          [(ngModel)]="termoPesquisa"
+          (ionInput)="pesquisarHistorico($event)"
+          placeholder="Pesquisar por moeda ou valor"
+          show-clear-button="focus">
+        </ion-searchbar>
+
+        <!-- Filtros -->
+        <div class="filters-container">
+          <ion-item>
+            <ion-label>Filtrar por moeda:</ion-label>
+            <ion-select 
+              [(ngModel)]="filtroMoeda" 
+              (ionChange)="filtrarPorMoeda($event)"
+              placeholder="Todas as moedas">
+              <ion-select-option value="">Todas</ion-select-option>
+              <ion-select-option *ngFor="let moeda of obterMoedasUnicas()" [value]="moeda">
+                {{ moeda }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <!-- Ordenação -->
+          <div class="sort-buttons">
+            <ion-segment [(ngModel)]="ordenacao" (ionChange)="aplicarOrdenacao()">
+              <ion-segment-button value="data" (click)="alterarOrdenacao('data')">
+                <ion-label>Data</ion-label>
+                <ion-icon 
+                  [name]="ordenacao === 'data' ? (ordemCrescente ? 'arrow-up' : 'arrow-down') : 'swap-vertical'"
+                  slot="end">
+                </ion-icon>
+              </ion-segment-button>
+              <ion-segment-button value="valor" (click)="alterarOrdenacao('valor')">
+                <ion-label>Valor</ion-label>
+                <ion-icon 
+                  [name]="ordenacao === 'valor' ? (ordemCrescente ? 'arrow-up' : 'arrow-down') : 'swap-vertical'"
+                  slot="end">
+                </ion-icon>
+              </ion-segment-button>
+              <ion-segment-button value="moeda" (click)="alterarOrdenacao('moeda')">
+                <ion-label>Moeda</ion-label>
+                <ion-icon 
+                  [name]="ordenacao === 'moeda' ? (ordemCrescente ? 'arrow-up' : 'arrow-down') : 'swap-vertical'"
+                  slot="end">
+                </ion-icon>
+              </ion-segment-button>
+            </ion-segment>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Lista do Histórico -->
+    <div *ngIf="historicoFiltrado.length > 0">
+      <ion-list>
+        <ion-item-sliding *ngFor="let item of historicoFiltrado; trackBy: trackByFn">
+          <ion-item>
+            <div slot="start" class="conversion-icon">
+              <ion-icon name="swap-horizontal" color="primary"></ion-icon>
+            </div>
+            
+            <ion-label>
+              <div class="conversion-main">
+                <h2>
+                  <span class="value-from">{{ formatarMoeda(item.valorOriginal, item.moedaOrigem) }}</span>
+                  <ion-icon name="arrow-forward" class="arrow-icon"></ion-icon>
+                  <span class="value-to">{{ formatarMoeda(item.valorConvertido, item.moedaDestino) }}</span>
+                </h2>
+                <div class="conversion-details">
+                  <p>
+                    <strong>{{ item.moedaOrigem }} → {{ item.moedaDestino }}</strong>
+                    | Taxa: {{ item.taxa | number:'1.6-6' }}
+                  </p>
+                  <p class="date">{{ formatarData(item.ultimaAlteracao) }}</p>
+                </div>
+              </div>
+            </ion-label>
+
+            <div slot="end" class="action-buttons">
+              <ion-button 
+                fill="clear" 
+                size="small" 
+                (click)="repetirConversao(item)"
+                color="primary">
+                <ion-icon name="repeat" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+          </ion-item>
+
+          <ion-item-options side="end">
+            <ion-item-option (click)="repetirConversao(item)" color="primary">
+              <ion-icon name="repeat" slot="icon-only"></ion-icon>
+            </ion-item-option>
+            <ion-item-option (click)="deletarItem(item)" color="danger">
+              <ion-icon name="trash" slot="icon-only"></ion-icon>
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+      </ion-list>
+
+      <!-- Ações do Histórico -->
+      <div class="history-actions">
+        <ion-button 
+          expand="block" 
+          fill="outline" 
+          (click)="exportarHistorico()"
+          [disabled]="historicoFiltrado.length === 0">
+          <ion-icon name="download" slot="start"></ion-icon>
+          Exportar Histórico
+        </ion-button>
+        
+        <ion-button 
+          expand="block" 
+          fill="clear" 
+          color="danger" 
+          (click)="limparHistorico()"
+          [disabled]="totalConversoes === 0">
+          <ion-icon name="trash" slot="start"></ion-icon>
+          Limpar Histórico
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Estado Vazio -->
+    <div *ngIf="historicoFiltrado.length === 0 && !carregando" class="empty-state">
+      <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
+      <h2>{{ termoPesquisa || filtroMoeda ? 'Nenhum resultado encontrado' : 'Nenhuma conversão encontrada' }}</h2>
+      <p>{{ termoPesquisa || filtroMoeda ? 'Tente ajustar os filtros de pesquisa' : 'Faça sua primeira conversão na aba "Converter"' }}</p>
+      <ion-button 
+        *ngIf="termoPesquisa || filtroMoeda" 
+        fill="clear" 
+        (click)="termoPesquisa = ''; filtroMoeda = ''; filtrarHistorico()">
+        Limpar Filtros
+      </ion-button>
+    </div>
+  </div>
 </ion-content>
