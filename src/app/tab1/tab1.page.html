@@ -9,9 +9,78 @@
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Tab 1</ion-title>
+      <ion-title size="large">Conversor de Moedas</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <app-explore-container name="Tab 1 page"></app-explore-container>
+  <div class="container">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-tittle>De</ion-card-tittle>
+      </ion-card-header>
+
+      <ion-card-content>
+        <ion-item>
+          <ion-label position="stacked">Valor</ion-label>
+          <ion-input
+            type="number"
+            [(ngModel)]="valor"
+            placeholder="Digite o valor"
+            min="0"
+            step="0.01"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Moeda de Origem</ion-label>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header>
+        <ion-card-tittle>Para</ion-card-tittle>
+      </ion-card-header>
+
+      <ion-card-content>
+        <ion-item>
+          <ion-label position="stacked">Moeda de Destino</ion-label>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-button
+      expand="block"
+      size="large"
+      (click)="calcularConversao()"
+      [disabled]="carregando || !valor || valor <= 0">
+        <ion-icon name="calculator" slot="start"></ion-icon>
+        Calcular Conversão
+    </ion-button>
+
+    <ion-card *ngIf="result > 0" class="result-card">
+      <ion-card-content>
+        <div class="result-container">
+          <h2>Resultado</h2>
+          <div class="display-conversao">
+            <span class="from-amount">{{valor | number:'1.2-2' }} {{ moedaOrigem }} </span>
+            <ion-icon name="arrow-forward" class="arrow-icon"></ion-icon>
+            <span class="to-amount">{{valor | number:'1.2-2' }} {{ moedaDestino }} </span>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-item *ngIf="ultimaAtualizacao" lines="none" class="ultima-atualizacao">
+      <ion-icon name="time-outline" slot="start"></ion-icon>
+      <ion-label>
+        <p>Última atualização de taxas: {{ultimaAtualizacao}}</p>
+      </ion-label>
+    </ion-item>
+
+    <div *ngIf="carregando" class="loading-container">
+      <ion-spinner name="dots"></ion-spinner>
+      <p>Atualizando taxas de cambio...</p>
+    </div>
+  </div>
 </ion-content>

@@ -22,7 +22,7 @@ interface TaxaCambio{
 export class Tab1Page {
 
   // Definição de variaveis a serem usadas na conversão
-  soma: number=0;
+  valor: number=0;
   moedaOrigem: string = 'USD';
   moedaDestino: string = 'BRL';
   resultado: number = 0;
@@ -108,7 +108,7 @@ export class Tab1Page {
   }
 
   async calcularConversao(){
-    if(!this.soma || this.soma <= 0){
+    if(!this.valor || this.valor <= 0){
       await this.showAlert('Atenção', 'Por favor, informe um valor maior que zero');
       return;
     }
@@ -119,7 +119,7 @@ export class Tab1Page {
     }
 
     const taxa = this.taxasCambio[this.moedaOrigem];
-    this.resultado = this.soma * taxa;
+    this.resultado = this.valor * taxa;
   }
 
     private async showAlert(header: string, message: string) {
