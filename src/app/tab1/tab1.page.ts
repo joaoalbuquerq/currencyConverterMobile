@@ -25,6 +25,7 @@ export class Tab1Page {
   soma: number=0;
   moedaOrigem: string = 'USD';
   moedaDestino: string = 'BRL';
+  resultado: number = 0;
 
   // Variaveis utilizadas para a resposta da pesquisa da API
   moedas: Moeda[] = [];
@@ -104,6 +105,21 @@ export class Tab1Page {
     }
 
     this.carregando = false;
+  }
+
+  async calcularConversao(){
+    if(!this.soma || this.soma <= 0){
+      await this.showAlert('Atenção', 'Por favor, informe um valor maior que zero');
+      return;
+    }
+
+    if(!this.taxasCambio[this.moedaDestino]){
+      await this.showAlert('Erro','Taxa de cambio não disponível');
+      return;
+    }
+
+    const taxa = this.taxasCambio[this.moedaOrigem];
+    this.resultado = this.soma * taxa;
   }
 
     private async showAlert(header: string, message: string) {
