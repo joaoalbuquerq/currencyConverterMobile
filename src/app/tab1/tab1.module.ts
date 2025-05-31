@@ -7,13 +7,16 @@ import { ExploreContainerComponentModule } from '../explore-container/explore-co
 
 import { Tab1PageRoutingModule } from './tab1-routing.module';
 
+import { HttpClientModule } from '@angular/common/module.d-CnjH8Dlt';
+
 @NgModule({
   imports: [
     IonicModule,
     CommonModule,
     FormsModule,
     ExploreContainerComponentModule,
-    Tab1PageRoutingModule
+    Tab1PageRoutingModule,
+    HttpClientModule
   ],
   declarations: [Tab1Page]
 })
