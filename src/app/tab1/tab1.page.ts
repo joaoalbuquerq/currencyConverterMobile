@@ -164,11 +164,12 @@ export class Tab1Page {
       return;
     }
 
-    const taxa = this.taxasCambio[this.moedaOrigem];
+    const taxa = this.taxasCambio[this.moedaDestino];
+    console.log(taxa)
     this.resultado = this.valor * taxa;
   }
 
-    private async showAlert(header: string, message: string) {
+  private async showAlert(header: string, message: string) {
     const alert = await this.alertCtrl.create({
       header,
       message,
