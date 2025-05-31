@@ -261,4 +261,28 @@ export class Tab1Page {
     this.exibirHistorico = !this.exibirHistorico;
   }
 
+  async limparHistorico(){
+    const alerta = await this.alertCtrl.create({
+      header: 'Limpar Histórico',
+      message: 'Tem certeza que deseja limpar todo o histórico de conversões ? ',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Limpar',
+          role: 'destuctive',
+          handler: async() => {
+            this.historico = [];
+            await this.storage.remove('historico_conversao');
+            this.exibirHistorico = false;
+          }
+        }
+      ]
+    });
+
+    await alerta.present();
+  }
+
 }
