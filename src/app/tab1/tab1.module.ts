@@ -8,6 +8,8 @@ import { ExploreContainerComponentModule } from '../explore-container/explore-co
 import { Tab1PageRoutingModule } from './tab1-routing.module';
 
 import { HttpClientModule } from '@angular/common/http';
+import { IonicStorageModule } from '@ionic/storage-angular';
+
 
 @NgModule({
   imports: [
@@ -16,7 +18,8 @@ import { HttpClientModule } from '@angular/common/http';
     FormsModule,
     ExploreContainerComponentModule,
     Tab1PageRoutingModule,
-    HttpClientModule
+    HttpClientModule,
+    IonicStorageModule
   ],
   declarations: [Tab1Page]
 })

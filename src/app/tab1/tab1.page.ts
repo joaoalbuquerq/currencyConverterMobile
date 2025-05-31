@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { AlertController, LoadingController } from '@ionic/angular';
+import { Storage } from '@ionic/storage-angular';
 
 // INTERFACE PARA MODELAR A RESPOSTA E CONVERTER PARA UM TIPO PERSONALIZADO MOEDA
 interface Moeda{
@@ -11,6 +12,16 @@ interface Moeda{
 // INTERFACE PARA MODELAR A RESPOSTA DA API E CONVERTER PARA UM TIPO PERSONALIZADO TAXACAMBIO
 interface TaxaCambio{
   [key:string]:number;
+}
+
+interface HistoricoConversoes {
+  id: string;
+  valorOriginal: number;
+  moedaOrigem: string;
+  moedaDestino: string;
+  valorConvertido: number;
+  taxa: number;
+  ultimaAlteracao: Date;
 }
 
 @Component({
@@ -41,6 +52,9 @@ export class Tab1Page {
   carregando: boolean = false;
   ultimaAtualizacao: string = "";
 
+  historico: HistoricoConversoes[] = [];
+  exibirHistorico: boolean = false;
+
 
   // Dados da API
   private apiKey = "47baa309f75101cea3287a40";
@@ -49,8 +63,16 @@ export class Tab1Page {
   constructor(
     private http: HttpClient,
     private loadingCtrl: LoadingController,
-    private alertCtrl: AlertController
-  ) {}
+    private alertCtrl: AlertController,
+    private storage: Storage
+  ) {
+    this.iniciarStorage();
+  }
+
+  async iniciarStorage(){
+    await this.storage.create();
+    await this.carregarHistorico();
+  }
 
   ngOnInit(){
     this.carregarMoedas();
@@ -167,6 +189,8 @@ export class Tab1Page {
     const taxa = this.taxasCambio[this.moedaDestino];
     console.log(taxa)
     this.resultado = this.valor * taxa;
+
+    await this.salvarHistoricoConversoes(this.valor, this.moedaOrigem, this.moedaDestino, this.resultado, taxa)
   }
 
    async trocarConversao() {
@@ -194,6 +218,47 @@ export class Tab1Page {
 
   get obterTaxaCambioAtual():number{
     return this.taxasCambio[this.moedaDestino]?.valueOf() || 0;
+  }
+
+  async carregarHistorico(){
+    try {
+      const historicoExistente = await this.storage.get('historico_conversao');
+      this.historico = historicoExistente ? historicoExistente.map((item: any) => ({
+        ...item,
+        atulizacao: new Date(item.ultimaAlteracao)
+      })): []
+    } catch (error) {
+      console.error('Erro ao carregar histórico',error);
+      this.historico = [];
+    }
+  }
+
+  async salvarHistoricoConversoes(valorOriginal:number, moedaOrigem: string, moedaDestino: string, valorConvertido:number, taxa: number){
+    const conversao: HistoricoConversoes = {
+      id: Date.now().toString(),
+      valorOriginal,
+      moedaOrigem,
+      moedaDestino,
+      valorConvertido,
+      taxa,
+      ultimaAlteracao: new Date()
+    };
+
+    this.historico.unshift(conversao);
+
+    if(this.historico.length > 50){
+      this.historico = this.historico.slice(0,50);
+    }
+
+    try{
+      await this.storage.set('historico_conversao', this.historico);
+    }catch(error){
+      console.error('Erro ao salvar histórico', error)
+    }
+  }
+
+  mostrarHistorico(){
+    this.exibirHistorico = !this.exibirHistorico;
   }
 
 }
