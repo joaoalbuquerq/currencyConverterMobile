@@ -140,7 +140,7 @@ export class Tab1Page {
   }
 
   selectFromCurrency(moeda: Moeda) {
-    this.moedaDestino = moeda.codigo;
+    this.moedaOrigem = moeda.codigo;
     this.fromSearchTerm = '';
     this.filteredFromCurrencies = [...this.moedas];
     // Recarrega as taxas com a nova moeda base
@@ -148,7 +148,7 @@ export class Tab1Page {
   }
 
   selectToCurrency(moeda: Moeda) {
-    this.moedaOrigem = moeda.codigo;
+    this.moedaDestino = moeda.codigo;
     this.toSearchTerm = '';
     this.filteredToCurrencies = [...this.moedas];
   }

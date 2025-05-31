@@ -1,0 +1,183 @@
+.container {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+// Seção de troca de moedas
+.swap-container {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+  
+  ion-button {
+    --border-radius: 50%;
+    --padding-start: 12px;
+    --padding-end: 12px;
+    
+    ion-icon {
+      font-size: 24px;
+    }
+  }
+}
+
+// Lista de moedas para seleção
+.currency-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--ion-color-light);
+  border-radius: 8px;
+  margin-top: 8px;
+  
+  ion-item {
+    --border-color: transparent;
+    
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--ion-color-light-shade);
+    }
+    
+    &:hover {
+      --background: var(--ion-color-light);
+    }
+  }
+}
+
+// Card de resultado
+.result-card {
+  margin-top: 24px;
+  background: linear-gradient(135deg, var(--ion-color-success) 0%, var(--ion-color-success-shade) 100%);
+  color: white;
+  
+  .result-container {
+    text-align: center;
+    
+    h2 {
+      margin: 0 0 16px 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    .conversion-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      
+      .from-amount, .to-amount {
+        font-size: 1.25rem;
+        font-weight: 500;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+      }
+      
+      .to-amount {
+        background: rgba(255, 255, 255, 0.2);
+        font-weight: 600;
+      }
+      
+      .arrow-icon {
+        font-size: 24px;
+        opacity: 0.8;
+      }
+    }
+  }
+}
+
+// Indicador de loading
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+  
+  p {
+    color: var(--ion-color-medium);
+    margin: 0;
+  }
+}
+
+// Info de última atualização
+.ultima-atualizacao {
+  margin-top: 16px;
+  opacity: 0.7;
+  
+  ion-label p {
+    font-size: 0.875rem;
+    margin: 0;
+  }
+}
+
+// Chips de moedas selecionadas
+ion-chip {
+  margin: 8px 0;
+  
+  ion-label {
+    font-weight: 600;
+  }
+}
+
+// Responsividade
+@media (max-width: 576px) {
+  .conversion-display {
+    flex-direction: column !important;
+    
+    .arrow-icon {
+      transform: rotate(90deg);
+    }
+  }
+}
+
+// Cards com melhor espaçamento
+ion-card {
+  margin: 16px 0;
+  
+  ion-card-header {
+    padding-bottom: 8px;
+    
+    ion-card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--ion-color-primary);
+    }
+  }
+}
+
+// Botões
+ion-button[expand="block"] {
+  margin: 24px 0 16px 0;
+  height: 48px;
+  font-weight: 600;
+  
+  ion-icon {
+    margin-right: 8px;
+  }
+}
+
+// Inputs
+ion-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  
+  ion-input, ion-searchbar {
+    --padding-start: 12px;
+  }
+}
+
+// Searchbar customizada
+ion-searchbar {
+  --background: var(--ion-color-light);
+  --border-radius: 8px;
+  --box-shadow: none;
+  
+  &.searchbar-has-focus {
+    --background: var(--ion-color-light-tint);
+  }
+}
