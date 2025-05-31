@@ -103,13 +103,14 @@ export class Tab1Page {
     this.carregarTaxasCambio();
   }
 
-  async carregarMoedas(){
-    const caregandoMoedas = await this.loadingCtrl.create({
+ async carregarMoedas() {
+    const carregandoMoedas = await this.loadingCtrl.create({
       message: 'Carregando moedas...'
     });
-    await caregandoMoedas.present();
+    await carregandoMoedas.present();
 
     try {
+      // Tenta carregar da API
       const respostaApi: any = await this.http.get(
         `${this.baseUrl}/${this.apiKey}/codes`
       ).toPromise();
@@ -119,24 +120,42 @@ export class Tab1Page {
         nome: item[1]
       }));
 
+      // SALVA no storage para usar depois se der erro
+      await this.storage.set('moedas_salvas', this.moedas);
+
       this.filteredFromCurrencies = [...this.moedas];
       this.filteredToCurrencies = [...this.moedas];
 
       await this.carregarTaxasCambio();
 
     } catch (error) {
-      console.log('Erro ao carregar moedas: ', error);
-      await this.showAlert('Erro','Não foi possível carregar as moedas')
+      console.log('Erro ao carregar moedas da API, tentando usar dados salvos...', error);
+      
+      // CARREGA do storage se der erro
+      const moedasSalvas = await this.storage.get('moedas_salvas');
+      
+      if (moedasSalvas && moedasSalvas.length > 0) {
+        this.moedas = moedasSalvas;
+        this.filteredFromCurrencies = [...this.moedas];
+        this.filteredToCurrencies = [...this.moedas];
+        
+        // Tenta carregar taxas também
+        await this.carregarTaxasCambio();
+        
+        await this.showAlert('Sem Internet', 'Usando dados salvos anteriormente.');
+      } else {
+        await this.showAlert('Erro', 'Não foi possível carregar as moedas e não há dados salvos.');
+      }
     }
 
-    await caregandoMoedas.dismiss();
+    await carregandoMoedas.dismiss();
   }
 
-  async carregarTaxasCambio(){
+  async carregarTaxasCambio() {
     this.carregando = true;
 
     try {
-
+      // Tenta carregar da API
       const respostaApi: any = await this.http.get(
         `${this.baseUrl}/${this.apiKey}/latest/${this.moedaOrigem}`
       ).toPromise();
@@ -144,12 +163,57 @@ export class Tab1Page {
       this.taxasCambio = respostaApi.conversion_rates;
       this.ultimaAtualizacao = new Date().toLocaleString('pt-BR');
       
+      // SALVA no storage para usar depois se der erro
+      await this.storage.set('taxas_salvas', {
+        taxas: this.taxasCambio,
+        moedaBase: this.moedaOrigem,
+        dataAtualizacao: this.ultimaAtualizacao
+      });
+      
     } catch (error) {
-      console.log("Erro ao carregar as taxas de cambio: ", error);
-      await this.showAlert('Erro', 'Não foi possivel atualizar as taxas de cambio');
+      console.log("Erro ao carregar taxas da API, tentando usar dados salvos...", error);
+      
+      // CARREGA do storage se der erro
+      const taxasSalvas = await this.storage.get('taxas_salvas');
+      
+      if (taxasSalvas && taxasSalvas.taxas) {
+        // Se a moeda base é a mesma, usa as taxas salvas
+        if (taxasSalvas.moedaBase === this.moedaOrigem) {
+          this.taxasCambio = taxasSalvas.taxas;
+          this.ultimaAtualizacao = taxasSalvas.dataAtualizacao + ' (salvo)';
+        } else {
+          // Se mudou a moeda base, tenta pegar taxas salvas de qualquer moeda
+          const todasTaxasSalvas = await this.storage.get('todas_taxas_salvas') || {};
+          
+          if (todasTaxasSalvas[this.moedaOrigem]) {
+            this.taxasCambio = todasTaxasSalvas[this.moedaOrigem].taxas;
+            this.ultimaAtualizacao = todasTaxasSalvas[this.moedaOrigem].dataAtualizacao + ' (salvo)';
+          } else {
+            this.taxasCambio = {};
+          }
+        }
+      } else {
+        this.taxasCambio = {};
+      }
     }
 
     this.carregando = false;
+  }
+
+    async salvarTaxasCompletas() {
+    try {
+      const todasTaxas = await this.storage.get('todas_taxas_salvas') || {};
+      
+      todasTaxas[this.moedaOrigem] = {
+        taxas: this.taxasCambio,
+        dataAtualizacao: this.ultimaAtualizacao,
+        moedaBase: this.moedaOrigem
+      };
+      
+      await this.storage.set('todas_taxas_salvas', todasTaxas);
+    } catch (error) {
+      console.error('Erro ao salvar taxas completas:', error);
+    }
   }
 
   filterFromCurrencies(event: any) {
@@ -182,12 +246,18 @@ export class Tab1Page {
     );
   }
 
-  selectFromCurrency(moeda: Moeda) {
+ async selectFromCurrency(moeda: Moeda) {
     this.moedaOrigem = moeda.codigo;
     this.fromSearchTerm = '';
     this.filteredFromCurrencies = [...this.moedas];
+    
     // Recarrega as taxas com a nova moeda base
-    this.carregarTaxasCambio();
+    await this.carregarTaxasCambio();
+    
+    // Salva as taxas para futuro uso offline
+    if (Object.keys(this.taxasCambio).length > 0) {
+      await this.salvarTaxasCompletas();
+    }
   }
 
   selectToCurrency(moeda: Moeda) {
@@ -219,13 +289,18 @@ export class Tab1Page {
       taxa);
   }
 
-   async trocarConversao() {
+ async trocarConversao() {
     const temp = this.moedaDestino;
     this.moedaDestino = this.moedaOrigem;
     this.moedaOrigem = temp;
     
     // Recarrega as taxas com a nova moeda base
     await this.carregarTaxasCambio();
+    
+    // Salva as taxas para futuro uso offline
+    if (Object.keys(this.taxasCambio).length > 0) {
+      await this.salvarTaxasCompletas();
+    }
     
     // Recalcula se já há um valor
     if (this.valor > 0) {
@@ -330,6 +405,36 @@ ionViewWillEnter() {
     
     // Recarrega os dados
     await this.verificarConversaoPreparada();
+  }
+
+  async limparCache() {
+    const alerta = await this.alertCtrl.create({
+      header: 'Limpar Cache',
+      message: 'Deseja limpar os dados salvos para teste offline?',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Limpar',
+          handler: async () => {
+            await this.storage.remove('moedas_salvas');
+            await this.storage.remove('taxas_salvas');
+            await this.storage.remove('todas_taxas_salvas');
+            
+            const confirmacao = await this.alertCtrl.create({
+              header: 'Cache Limpo',
+              message: 'Dados salvos foram removidos.',
+              buttons: ['OK']
+            });
+            await confirmacao.present();
+          }
+        }
+      ]
+    });
+    
+    await alerta.present();
   }
 
 }
