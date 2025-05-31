@@ -31,11 +31,11 @@ export class Tab1Page {
   moedas: Moeda[] = [];
   taxasCambio: TaxaCambio = {};
 
-  //Filtros
-  moedasFiltradas: Moeda[] = [];
-  moedasParaFiltro: Moeda[] = [];
-  termoPesquisaInicial: string = '';
-  termoPesquisaFinal: string = '';
+  // Para pesquisa
+  filteredFromCurrencies: Moeda[] = [];
+  filteredToCurrencies: Moeda[] = [];
+  fromSearchTerm: string = '';
+  toSearchTerm: string = '';
 
   // Estados da tela
   carregando: boolean = false;
@@ -76,8 +76,8 @@ export class Tab1Page {
         nome: item[1]
       }));
 
-      this.moedasFiltradas = [...this.moedas];
-      this.moedasParaFiltro = [...this.moedas];
+      this.filteredFromCurrencies = [...this.moedas];
+      this.filteredToCurrencies = [...this.moedas];
 
       await this.carregarTaxasCambio();
 
@@ -85,6 +85,8 @@ export class Tab1Page {
       console.log('Erro ao carregar moedas: ', error);
       await this.showAlert('Erro','Não foi possível carregar as moedas')
     }
+
+    await caregandoMoedas.dismiss();
   }
 
   async carregarTaxasCambio(){
@@ -105,6 +107,50 @@ export class Tab1Page {
     }
 
     this.carregando = false;
+  }
+
+  filterFromCurrencies(event: any) {
+    const searchTerm = event.target.value.toLowerCase();
+    this.fromSearchTerm = searchTerm;
+    
+    if (!searchTerm) {
+      this.filteredFromCurrencies = [...this.moedas];
+      return;
+    }
+    
+    this.filteredFromCurrencies = this.moedas.filter(moeda =>
+      moeda.nome.toLowerCase().includes(searchTerm) ||
+      moeda.codigo.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  filterToCurrencies(event: any) {
+    const searchTerm = event.target.value.toLowerCase();
+    this.toSearchTerm = searchTerm;
+    
+    if (!searchTerm) {
+      this.filteredToCurrencies = [...this.moedas];
+      return;
+    }
+    
+    this.filteredToCurrencies = this.moedas.filter(moeda =>
+      moeda.nome.toLowerCase().includes(searchTerm) ||
+      moeda.codigo.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  selectFromCurrency(moeda: Moeda) {
+    this.moedaDestino = moeda.codigo;
+    this.fromSearchTerm = '';
+    this.filteredFromCurrencies = [...this.moedas];
+    // Recarrega as taxas com a nova moeda base
+    this.carregarTaxasCambio();
+  }
+
+  selectToCurrency(moeda: Moeda) {
+    this.moedaOrigem = moeda.codigo;
+    this.toSearchTerm = '';
+    this.filteredToCurrencies = [...this.moedas];
   }
 
   async calcularConversao(){

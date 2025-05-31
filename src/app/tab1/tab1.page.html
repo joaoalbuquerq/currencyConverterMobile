@@ -33,7 +33,30 @@
 
         <ion-item>
           <ion-label position="stacked">Moeda de Origem</ion-label>
+          <ion-searchbar 
+            [(ngModel)]="fromSearchTerm"
+            (ionInput)="filterFromCurrencies($event)"
+            placeholder="Pesquise a moeda"
+            show-clear-button="focus">
+          </ion-searchbar>
         </ion-item>
+
+         <div class="currency-list" *ngIf="fromSearchTerm">
+          <ion-item 
+            button 
+            *ngFor="let moeda of filteredFromCurrencies | slice:0:5" 
+            (click)="selectFromCurrency(moeda)">
+            <ion-label>
+              <h3>{{ moeda.codigo }}</h3>
+              <p>{{ moeda.nome }}</p>
+            </ion-label>
+          </ion-item>
+        </div>
+
+        <ion-chip color="primary" *ngIf="moedaOrigem && !fromSearchTerm">
+          <ion-label>{{ moedaOrigem }}</ion-label>
+        </ion-chip>
+
       </ion-card-content>
     </ion-card>
 
@@ -45,6 +68,34 @@
       <ion-card-content>
         <ion-item>
           <ion-label position="stacked">Moeda de Destino</ion-label>
+          <ion-searchbar 
+            [(ngModel)]="toSearchTerm"
+            (ionInput)="filterToCurrencies($event)"
+            placeholder="Pesquise a moeda"
+            show-clear-button="focus">
+          </ion-searchbar>
+        </ion-item>
+
+        <div class="currency-list" *ngIf="toSearchTerm">
+          <ion-item 
+            button 
+            *ngFor="let moeda of filteredToCurrencies | slice:0:5" 
+            (click)="selectToCurrency(moeda)">
+            <ion-label>
+              <h3>{{ moeda.codigo }}</h3>
+              <p>{{ moeda.nome }}</p>
+            </ion-label>
+          </ion-item>
+        </div>
+
+        <ion-chip color="secondary" *ngIf="moedaDestino && !toSearchTerm">
+          <ion-label>{{ moedaDestino }}</ion-label>
+        </ion-chip>
+
+        <ion-item *ngIf="obterTaxaCambioAtual > 0 && !toSearchTerm">
+          <ion-label>
+            <p>Taxa atual: 1 {{ moedaDestino }} = {{ obterTaxaCambioAtual | number:'1.2-4' }} {{ moedaOrigem }}</p>
+          </ion-label>
         </ion-item>
       </ion-card-content>
     </ion-card>
