@@ -169,6 +169,20 @@ export class Tab1Page {
     this.resultado = this.valor * taxa;
   }
 
+   async trocarConversao() {
+    const temp = this.moedaDestino;
+    this.moedaDestino = this.moedaOrigem;
+    this.moedaOrigem = temp;
+    
+    // Recarrega as taxas com a nova moeda base
+    await this.carregarTaxasCambio();
+    
+    // Recalcula se já há um valor
+    if (this.valor > 0) {
+      this.calcularConversao();
+    }
+  }
+
   private async showAlert(header: string, message: string) {
     const alert = await this.alertCtrl.create({
       header,

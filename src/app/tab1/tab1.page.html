@@ -60,6 +60,16 @@
       </ion-card-content>
     </ion-card>
 
+    <div class="swap-container">
+      <ion-button 
+        fill="clear" 
+        size="large" 
+        (click)="trocarConversao()"
+        [disabled]="carregando">
+        <ion-icon name="swap-vertical"></ion-icon>
+      </ion-button>
+    </div>
+
     <ion-card>
       <ion-card-header>
         <ion-card-title>Para</ion-card-title>
