@@ -285,4 +285,13 @@ export class Tab1Page {
     await alerta.present();
   }
 
+  async deletarItemHistorico(item: HistoricoConversoes){
+    this.historico = this.historico.filter(h => h.id !== item.id);
+    try{
+      await this.storage.set('historico_conversao',this.historico)
+    }catch(error){
+      console.error('Erro ao deletar item do histórico', error)
+    }
+  }
+
 }
